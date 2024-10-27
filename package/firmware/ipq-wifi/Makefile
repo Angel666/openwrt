@@ -162,7 +162,7 @@ endef
 
 $(eval $(call generate-ipq-wifi-package,8devices_mango,8devices Mango))
 $(eval $(call generate-ipq-wifi-package,arcadyan_aw1000,Arcadyan AW1000))
-$(eval $(call generate-ipq-wifi-package,tplink,archer-ax55-v1,TP-Link Archer AX55v1))
+$(eval $(call generate-ipq-wifi-package,archer-ax55-v1,TP-Link Archer AX55v1))
 $(eval $(call generate-ipq-wifi-package,asus_rt-ax89x,Asus RT-AX89X))
 $(eval $(call generate-ipq-wifi-package,buffalo_wxr-5950ax12,Buffalo WXR-5950AX12))
 $(eval $(call generate-ipq-wifi-package,cambiumnetworks_xe34,Cambium Networks XE3-4))
