@@ -25,6 +25,11 @@ platform_do_upgrade() {
 		fw_setenv auto_recovery yes
 		nand_do_upgrade "$1"
 		;;
+	tplink,archer-ax55-v1)
+			CI_UBIPART="rootfs_1"
+			[ "$(find_mtd_chardev rootfs)" ] && CI_UBIPART="rootfs"
+			nand_upgrade_tar "$1"
+		;;
 	*)
 		default_do_upgrade "$1"
 		;;

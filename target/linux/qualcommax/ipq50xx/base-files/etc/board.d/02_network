@@ -11,6 +11,10 @@ ipq50xx_setup_interfaces()
 		linksys,mx5500)
 			ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" "wan"
 			;;
+		tplink,archer-ax55-v1)
+			ucidef_add_switch "switch0"
+			ucidef_set_interfaces_lan_wan "eth1" "eth0"
+			;;
 	esac
 }
 
