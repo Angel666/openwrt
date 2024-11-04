@@ -39,7 +39,7 @@ define Device/linksys_mx5500
 endef
 TARGET_DEVICES += linksys_mx5500
 
-define Device/tplink_archer-ax55-v1
+define Device/tplink_ax55-v1
 	$(call Device/FitImage)
     $(call Device/UbiFit)
 	DEVICE_VENDOR := TP-Link
@@ -59,4 +59,4 @@ define Device/tplink_archer-ax55-v1
                        kmod-switch-rtl8367b
 			
 endef
-TARGET_DEVICES += tplink_archer-ax55-v1
+TARGET_DEVICES += tplink_ax55-v1

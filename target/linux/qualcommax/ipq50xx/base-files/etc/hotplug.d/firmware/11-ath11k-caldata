@@ -7,11 +7,11 @@
 board=$(board_name)
 
 case "$FIRMWARE" in
-"ath11k/IPQ5018/hw1.0/cal-ahb-c000000.wifi.bin")
+"ath11k/IPQ5018/hw1.0/caldata.bin")
 	case "$board" in
 	linksys,mx2000|\
 	linksys,mx5500|\
-	tplink,archer-ax55-v1)
+	tplink,ax55-v1)
 		caldata_extract "0:ART" 0x1000 0x20000
 		label_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		ath11k_patch_mac $(macaddr_add $label_mac 1) 0
@@ -20,10 +20,10 @@ case "$FIRMWARE" in
 		;;
 	esac
 	;;
-"ath11k/qcn6122/hw1.0/cal-ahb-soc@0:wifi1@c000000.bin")
+"ath11k/qcn6122/hw1.0/caldata_1.bin")
 	case "$board" in
 	linksys,mx2000|\
-	tplink,archer-ax55-v1)
+	tplink,ax55-v1)
 		caldata_extract "0:ART" 0x26800 0x20000
 		label_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		ath11k_patch_mac $(macaddr_add $label_mac 2) 0

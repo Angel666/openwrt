@@ -101,6 +101,8 @@
 		};
 	};
 
+
+
 };
 
 &switch {
@@ -125,6 +127,8 @@
 		};
 	};
 };
+
+
 
 // MAC0 -> GE Phy
 &dp1 {
@@ -178,7 +182,7 @@
 
 	// QCA8337 Phy0 -> IPQ5018 GE Phy
 	qca8337_0: ethernet-phy@0 {
-		reg = <0>;
+		reg = <28>;
 	};
 
 	// QCA8337 Phy1 -> WAN
@@ -278,6 +282,15 @@
 	pinctrl-names = "default";
 };
 
+&bt {
+	firmware-name = "qca/bt_fw_patch.mdt";
+	status = "okay";
+};
+
+&bluetooth {
+	status = "okay";
+};
+
 &crypto {
 	status = "okay";
 };
@@ -375,7 +388,17 @@
 					#address-cells = <1>;
 					#size-cells = <1>;
 					reg = <0x4c0000 0x100000>;
+
+					nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					macaddr_dp1: macaddr@0 {
+						reg = <0x0 0x6>;
+					};
 				};
+			};
 
 				partition@5c0000 {
 					label = "0:TRAINING";
@@ -462,6 +485,31 @@
 		function = "blsp0_uart0";
 		bias-disable;
 	};
+
+	phy_led_pins: phy_led_pins {
+		gephy_led_pin {
+			pins = "gpio46";
+			function = "led0";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
+
+			i2c_pins: i2c_pins {
+		i2c_scl {
+			pins = "gpio25";
+			function = "blsp2_i2c1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		i2c_sda {
+			pins = "gpio26";
+			function = "blsp2_i2c1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
 };
 
 &tsens {
@@ -470,12 +518,20 @@
 
 &pcie_x1 {
 	status = "disabled";
-	perst-gpio = <&tlmm 18 1>;
+	perst-gpios = <&tlmm 18 GPIO_ACTIVE_LOW>;
 };
 
 &pcie_x2 {
 	status = "disabled";
 	perst-gpios = <&tlmm 15 GPIO_ACTIVE_LOW>;
+};
+
+&pcie_x1phy {
+	status = "disabled";
+};
+
+&pcie_x2phy {
+	status = "ok";
 };
 
 &q6v5_wcss {
@@ -574,6 +630,9 @@
 	qcom,multipd_arch;
 	qcom,rproc = <&q6_wcss_pd1>;
 	qcom,userpd-subsys-name = "q6v5_wcss_userpd1";
+
+	//qcom,board_id = <0x24>;
+
 	qcom,ath11k-calibration-variant = "TP-LINK-AX55-V1";
 	qcom,ath11k-fw-memory-mode = <2>;
 	qcom,bdf-addr = <0x4c400000>;
@@ -586,9 +645,13 @@
 	qcom,multipd_arch;
 	qcom,rproc = <&q6_wcss_pd2>;
 	qcom,userpd-subsys-name = "q6v5_wcss_userpd2";
+
+	//qcom,board_id = <0x60>;
+
 	qcom,ath11k-calibration-variant = "TP-LINK-AX55-V1";
 	qcom,ath11k-fw-memory-mode = <2>;
-	qcom,bdf-addr = <0x0 0x4D200000 0x4CF00000 0x0 0x0>;
-	m3-dump-addr = <0x4E200000>;
+	qcom,bdf-addr = <0x4d100000>;
+	qcom,m3-dump-addr = <0x4df00000>;
+
 	status = "okay";
 };
