@@ -11,9 +11,13 @@ ipq50xx_setup_interfaces()
 		linksys,mx5500)
 			ucidef_set_interfaces_lan_wan "lan1 lan2 lan3" "wan"
 			;;
-		tplink,archer-ax55-v1)
-			ucidef_add_switch "switch1" \
-				"1:lan" "2:lan" "3:lan" "4:lan" "0:wan" "6@eth0"
+		tplink,ax55v1)
+			ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" "wan"
+
+			ucidef_add_bridge "br-lan" "lan1 lan2 lan3 lan4"
+
+			ucidef_add_switch "switch0" \
+    		"0:lan1" "1:lan2" "2:lan3" "3:lan4" "4:wan" "6@cpu"
 			;;
 	esac
 }
@@ -27,9 +31,16 @@ ipq50xx_setup_macs()
 
 	case "$board" in
 		linksys,mx2000|\
-		linksys,mx5500|\
-		tplink,archer-ax55-v1)
+		linksys,mx5500)
 			label_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
+			lan_mac=$label_mac
+			wan_mac=$label_mac
+			ucidef_set_network_device_mac eth1 $label_mac
+		;;
+		glinet,gl-b3000|\
+		b3000|\
+		tplink,ax55v1)
+			label_mac=$(get_mac_label_dt)
 			lan_mac=$label_mac
 			wan_mac=$label_mac
 			ucidef_set_network_device_mac eth1 $label_mac

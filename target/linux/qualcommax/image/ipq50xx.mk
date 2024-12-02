@@ -39,24 +39,25 @@ define Device/linksys_mx5500
 endef
 TARGET_DEVICES += linksys_mx5500
 
-define Device/tplink_ax55-v1
+define Device/tplink_ax55v1
 	$(call Device/FitImage)
     $(call Device/UbiFit)
 	DEVICE_VENDOR := TP-Link
 	DEVICE_MODEL := AX55v1
 	BLOCKSIZE := 128k
 	PAGESIZE := 2048
-	KERNEL_SIZE := 8192k
-	IMAGE_SIZE := 83968k
 	DEVICE_DTS_CONFIG := config@mp03.3
 	SOC := ipq5018
 	UBINIZE_OPTS := -E 5	# EOD marks to "hide" factory sig at EOF
 	IMAGES += nand-factory.ubi
 	DEVICE_PACKAGES := \
                        ath11k-firmware-qcn6122 \
-                       kmod-switch-rtl8366-smi \
-					   ipq-wifi-tplink_archer-ax55-v1 \
-                       kmod-switch-rtl8367b
+					   ipq-wifi-tplink_ax55v1 \
+					   kmod-bluetooth \
+					   ipq5018-maple-bt-firmware \
+					   kmod-switch-rtl8366-smi
+					  
+					   
 			
 endef
-TARGET_DEVICES += tplink_ax55-v1
+TARGET_DEVICES += tplink_ax55v1

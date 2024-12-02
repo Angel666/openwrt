@@ -1,0 +1,468 @@
+// SPDX-License-Identifier: (GPL-2.0+)
+
+/dts-v1/;
+
+#include "ipq5018.dtsi"
+#include "ipq5018-ess.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+
+/ {
+	model = "Tplink AX55v1";
+	compatible = "tplink,ax55v1", "qcom,ipq5018", "qcom,ipq5018-mp03.3";
+
+	interrupt-parent = <&intc>;
+
+	aliases {
+		serial0 = &blsp1_uart1;
+		//ethernet0 = &dp1;
+		ethernet1 = &dp2;
+	};
+
+	chosen {
+		// Override the root parameter from u-boot
+		// Increase coherent_pool size for WiFi
+		//bootargs = "ubi.mtd=rootfs_1 root=mtd:ubi_rootfs rootfstype=squashfs rootwait";
+		bootargs-append = " swiotlb=1 coherent_pool=2M";
+		stdout-path = "serial0:115200n8";
+	};
+
+	reserved-memory {
+		// Not sure why but without this, WiFi will crash
+		tz: tz@4ac00000 {
+			no-map;
+			reg = <0x00 0x4ac00000 0x00 0x400000>;
+		};
+
+        tzapp: tzapp@4a400000 {
+			no-map;
+			reg = <0x0 0x4a400000 0x0 0x400000>;
+		};
+
+		nss@40000000 {
+			no-map;
+			reg = <0x00 0x40000000 0x00 0x1000000>;
+		};
+
+		q6_mem_regions: q6_mem_regions@4b000000 {
+			no-map;
+			// reg = <0x0 0x4b000000 0x0 0x3b00000>;
+			reg = <0x0 0x4b000000 0x0 0x3000000>;
+		};
+
+        dma_pool1@50700000 {
+			compatible = "shared-dma-pool";
+			no-map;
+			reg = <0x00 0x50700000 0x00 0x1000000>;
+		};
+	};
+
+	thermal-zones {
+		status = "ok";
+	};
+
+	rtl8367s {
+		compatible = "realtek,rtl8367b";
+		realtek,extif1 = <0 0 10 1 0 0 1 1 4>;
+		mii-bus = <&mdio1>;
+		cpu-port = <6>;
+		phy_id = <29>;
+	};
+};
+
+&tlmm {
+	blsp_uart0_pins: blsp_uart0_pins {
+		pins =
+			"gpio28", /* RX */
+			"gpio29"; /* TX */
+		function = "blsp0_uart1";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	i2c_pins: i2c_pins {
+		i2c_scl {
+			pins = "gpio25";
+			function = "blsp2_i2c1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		i2c_sda {
+			pins = "gpio26";
+			function = "blsp2_i2c1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	blsp0_spi_pins: blsp0_spi_pins {
+		linux,phandle = <0x05>;
+		phandle = <0x05>;
+
+		mux {
+			pins = "gpio10", "gpio11", "gpio12", "gpio13";
+			function = "blsp0_spi";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	qpic_pins: qpic-state {
+		clock-pins {
+			pins = "gpio9";
+			function = "qspi_clk";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		cs-pins {
+			pins = "gpio8";
+			function = "qspi_cs";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		data-pins {
+			pins = "gpio4", "gpio5", "gpio6", "gpio7";
+			function = "qspi_data";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	mdio1_pins: mdio1_pins {
+		mdc {
+			pins = "gpio36";
+			function = "mdc";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mdio {
+			pins = "gpio37";
+			function = "mdio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	phy_led_pins {
+				linux,phandle = <0x23>;
+				phandle = <0x23>;
+
+				gephy_led_pin {
+					pins = "gpio46";
+					function = "led0";
+					drive-strength = <0x08>;
+					bias-pull-down;
+				};
+			};
+};
+
+&blsp1_uart1 {
+	pinctrl-0 = <&blsp_uart0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&qpic_bam {
+	status = "okay";
+};
+
+&qpic_nand {
+	pinctrl-0 = <&qpic_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+
+	partitions {
+		status = "disabled";
+	};
+};
+
+&soc {
+	leds {
+		compatible = "gpio-leds";
+
+		led_power {
+			gpios = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+			label = "green:power";
+			default-state = "on";
+		};
+
+		led_orange_wan {
+			gpios = <&tlmm 22 GPIO_ACTIVE_HIGH>;
+			label = "orange:wan";
+		};
+
+		led_green_wan {
+			gpios = <&tlmm 11 GPIO_ACTIVE_HIGH>;
+			label = "green:wan";
+		};
+
+		led_lan {
+			gpios = <&tlmm 10 GPIO_ACTIVE_HIGH>;
+			label = "green:lan";
+		};
+
+		led_wlan_2g {
+			gpios = <&tlmm 13 GPIO_ACTIVE_HIGH>;
+			label = "green:wlan2.4";
+		};
+
+		led_usb {
+			gpios = <&tlmm 38 GPIO_ACTIVE_HIGH>;
+			label = "green:usb";
+		};
+	};
+};
+
+&switch {
+	status = "okay";
+
+	switch_mac_mode = <0x0c>; // PORT_WRAPPER_SGMII_PLUS
+
+	qcom,port_phyinfo {
+		// MAC0 -> GE Phy -> Phy4
+		port@0 {
+			port_id = <1>;
+			mdiobus = <&mdio0>;
+			phy_address = <7>;
+			// status = "disabled";
+		};
+
+		// MAC1 ---SGMII---> SerDes
+		port@1 {
+			port_id = <2>;
+			forced-speed = <2500>;
+			forced-duplex = <1>;
+		};
+	};
+};
+
+// MAC0 -> GE Phy
+&dp1 {
+	status = "okay";
+	phy-mode = "sgmii";
+};
+
+// MAC1 ---SGMII---> SerDes
+&dp2 {
+	status = "okay";
+	phy-mode = "sgmii";
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&mdio0 {
+	status = "ok";
+	//resets = <&gcc GCC_GEPHY_MDC_SW_ARES>;
+	//reset-names = "phy";
+};
+
+// IPQ5018 GE Phy -> Phy4
+&ge_phy {
+	status = "okay";
+};
+
+&mdio1 {
+	status = "okay";
+	pinctrl-0 = <&mdio1_pins>;
+	pinctrl-names = "default";
+	reset-gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+};
+
+&sleep_clk {
+	clock-frequency = <32000>;
+};
+
+&xo_board_clk {
+	clock-frequency = <24000000>;
+};
+
+&bluetooth {
+	firmware-name = "qca/bt_fw_patch.mdt";
+	status = "disabled";
+};
+
+&crypto {
+	status = "okay";
+};
+
+&cryptobam {
+	status = "okay";
+};
+
+&pcie_x2phy {
+	status = "okay";
+};
+
+&pcie_x1 {
+	status = "disabled";
+	perst-gpio = <&tlmm 18 1>;
+};
+
+&pcie_x2 {
+	status = "okay";
+
+	perst-gpios = <&tlmm 15 GPIO_ACTIVE_LOW>;
+};
+
+&tsens {
+	status = "okay";
+};
+
+&prng {
+	status = "okay";
+};
+
+&qfprom {
+	status = "okay";
+};
+
+&usb {
+	qcom,select-utmi-as-pipe-clk;
+	status = "disabled";
+};
+
+&usb_dwc {
+	status = "disabled";
+};
+
+&usbphy0 {
+	status = "disabled";
+};
+
+&usbphy1 {
+	status = "disabled";
+};
+
+&q6v5_wcss {
+	memory-region = <&q6_mem_regions>;
+
+	firmware-name = "IPQ5018/q6_fw.mdt",
+			"IPQ5018/m3_fw.mdt",
+			"qcn6122/m3_fw.mdt";
+
+	qcom,bootargs_smem = <507>;
+	boot-args = <0x01 0x04 0x02 0x0f 0x00 0x00>;
+
+	status = "okay";
+
+	// IPQ5018
+	q6_wcss_pd1: pd-1 {
+		resets =
+			<&gcc GCC_WCSSAON_RESET>,
+			<&gcc GCC_WCSS_BCR>,
+			<&gcc GCC_CE_BCR>;
+		reset-names =
+			"wcss_aon_reset",
+			"wcss_reset",
+			"ce_reset";
+
+		clocks =
+			<&gcc GCC_WCSS_AHB_S_CLK>,
+			<&gcc GCC_WCSS_ACMT_CLK>,
+			<&gcc GCC_WCSS_AXI_M_CLK>;
+		clock-names =
+			"gcc_wcss_ahb_s_clk",
+					"gcc_wcss_acmt_clk",
+					"gcc_wcss_axi_m_clk";
+
+		reg = <0x4ab000 0x20>;
+		reg-names = "rmb";
+
+		// qcom,halt-regs = <&tcsr_q6_block 0xa000 0xd000 0x0>;
+
+		interrupts-extended =
+			<&wcss_smp2p_in 8 0>,
+			<&wcss_smp2p_in 9 0>,
+			<&wcss_smp2p_in 12 0>,
+			<&wcss_smp2p_in 11 0>;
+		interrupt-names =
+			"fatal",
+			"ready",
+			"spawn-ack",
+			"stop-ack";
+
+		qcom,smem-states =
+			<&wcss_smp2p_out 8>,
+			<&wcss_smp2p_out 9>,
+			<&wcss_smp2p_out 10>;
+		qcom,smem-state-names =
+			"shutdown",
+			"stop",
+			"spawn";
+
+		firmware-name = "IPQ5018/q6_fw.mdt";
+		// m3_firmware = "IPQ5018/m3_fw.mdt";
+	};
+
+	// QCN6102
+	q6_wcss_pd2: pd-2 {
+		interrupts-extended =
+			<&wcss_smp2p_in 16 0>,
+			<&wcss_smp2p_in 17 0>,
+			<&wcss_smp2p_in 20 0>,
+			<&wcss_smp2p_in 19 0>;
+		interrupt-names =
+			"fatal",
+			"ready",
+			"spawn-ack",
+			"stop-ack";
+
+		qcom,smem-states =
+			<&wcss_smp2p_out 16>,
+			<&wcss_smp2p_out 17>,
+			<&wcss_smp2p_out 18>;
+		qcom,smem-state-names =
+			"shutdown",
+			"stop",
+			"spawn";
+
+		firmware-name = "IPQ5018/q6_fw.mdt";
+		// m3_firmware = "qcn6122/m3_fw.mdt";
+	};
+};
+
+&wifi0 {
+	// IPQ5000
+	qcom,rproc = <&q6_wcss_pd1>;
+
+	// Be overridden by /etc/hotplug.d/firmware/10-ath11k-board_id
+	// M79: 0x10
+	// M81: 0x24
+	qcom,board_id = <0x24>;
+
+	// qcom,ath11k-fw-memory-mode = <0>;
+	// qcom,bdf-addr = <0x4c400000>;
+	// qcom,caldb-addr = <0x4d200000>;
+	// qcom,m3-dump-addr = <0x4d400000>;
+
+	qcom,ath11k-fw-memory-mode = <2>;
+	qcom,bdf-addr = <0x4c400000>;
+
+	status = "disabled";
+};
+
+&wifi1 {
+	// QCN6102
+	qcom,rproc = <&q6_wcss_pd2>;
+
+	qcom,board_id = <0x60>;
+
+	// qcom,ath11k-fw-memory-mode = <0>;
+	// qcom,bdf-addr = <0x4d500000>;
+	// qcom,caldb-addr = <0x4e500000>;
+	// qcom,m3-dump-addr = <0x4ea00000>;
+
+	qcom,ath11k-fw-memory-mode = <2>;
+	qcom,bdf-addr = <0x4d100000>;
+	qcom,m3-dump-addr = <0x4df00000>;
+
+	status = "disabled";
+};

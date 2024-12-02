@@ -7,25 +7,37 @@
 board=$(board_name)
 
 case "$FIRMWARE" in
-"ath11k/IPQ5018/hw1.0/caldata.bin")
+"ath11k/IPQ5018/hw1.0/cal-ahb-c000000.wifi.bin")
 	case "$board" in
 	linksys,mx2000|\
-	linksys,mx5500|\
-	tplink,ax55-v1)
+	linksys,mx5500)
 		caldata_extract "0:ART" 0x1000 0x20000
 		label_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		ath11k_patch_mac $(macaddr_add $label_mac 1) 0
 		ath11k_remove_regdomain
 		ath11k_set_macflag
 		;;
+	tplink,ax55v1)
+		caldata_extract "0:ART" 0x1000 0x20000
+		label_mac=$(get_mac_label_dt)
+		ath11k_patch_mac $(macaddr_add $label_mac 1) 0
+		ath11k_remove_regdomain
+		ath11k_set_macflag
+		;;
 	esac
 	;;
-"ath11k/qcn6122/hw1.0/caldata_1.bin")
+"ath11k/qcn6122/hw1.0/cal-ahb-soc@0:wifi1@c000000.bin")
 	case "$board" in
-	linksys,mx2000|\
-	tplink,ax55-v1)
+	linksys,mx2000)
 		caldata_extract "0:ART" 0x26800 0x20000
 		label_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
+		ath11k_patch_mac $(macaddr_add $label_mac 2) 0
+		ath11k_remove_regdomain
+		ath11k_set_macflag
+		;;
+	tplink,ax55v1)
+		caldata_extract "0:ART" 0x26800 0x20000
+		label_mac=$(get_mac_label_dt)
 		ath11k_patch_mac $(macaddr_add $label_mac 2) 0
 		ath11k_remove_regdomain
 		ath11k_set_macflag
