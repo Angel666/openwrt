@@ -21,11 +21,9 @@
 	};
 
 	chosen {
-		// Override the root parameter from u-boot
-		// Increase coherent_pool size for WiFi
-		//bootargs = "ubi.mtd=rootfs_1 root=mtd:ubi_rootfs rootfstype=squashfs rootwait";
+		bootargs = "console=ttyMSM0,115200,n8 rw init=/init";
 		bootargs-append = " swiotlb=1 coherent_pool=2M";
-		stdout-path = "serial0:115200n8";
+		stdout-path = "serial0";
 	};
 
 	reserved-memory {
@@ -62,13 +60,15 @@
 		status = "ok";
 	};
 
-	rtl8367s {
-		compatible = "realtek,rtl8367b";
-		realtek,extif1 = <0 0 10 1 0 0 1 1 4>;
-		mii-bus = <&mdio1>;
-		cpu-port = <6>;
-		phy_id = <29>;
-	};
+realtek@29{
+			compatible = "realtek,rtl8367s";
+			mii-bus = <&mdio1>;
+			realtek,extif1 = <0 0 10 1 0 0 1 1 4>;
+			switch = <&tlmm 33 0>;
+			cpu-port = <6>;
+			phy-addr = <29>;
+            status = "ok";
+		};
 };
 
 &tlmm {
@@ -132,15 +132,15 @@
 		};
 	};
 
-	mdio1_pins: mdio1_pins {
-		mdc {
+	mdio1_pins: mdio_pinmux {
+		mux_0 {
 			pins = "gpio36";
 			function = "mdc";
 			drive-strength = <8>;
 			bias-pull-up;
 		};
 
-		mdio {
+		mux_1 {
 			pins = "gpio37";
 			function = "mdio";
 			drive-strength = <8>;
@@ -148,17 +148,73 @@
 		};
 	};
 
-	phy_led_pins {
-				linux,phandle = <0x23>;
-				phandle = <0x23>;
+	phy_led_pins: phy_led_pins {
+		gephy_led_pin {
+			pins = "gpio46";
+			function = "led0";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
 
-				gephy_led_pin {
-					pins = "gpio46";
-					function = "led0";
-					drive-strength = <0x08>;
-					bias-pull-down;
-				};
-			};
+	button_pins: button_pins {
+		wps_button {
+			pins = "gpio38";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+	audio_pins: audio_pinmux {
+		mux_1 {
+			pins = "gpio24";
+			function = "audio_rxbclk";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		mux_2 {
+			pins = "gpio25";
+			function = "audio_rxfsync";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		mux_3 {
+			pins = "gpio26";
+			function = "audio_rxd";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		mux_4 {
+			pins = "gpio27";
+			function = "audio_txmclk";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		mux_5 {
+			pins = "gpio28";
+			function = "audio_txbclk";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		mux_6 {
+			pins = "gpio29";
+			function = "audio_txfsync";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		mux_7 {
+			pins = "gpio30";
+			function = "audio_txd";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
 };
 
 &blsp1_uart1 {
@@ -175,10 +231,6 @@
 	pinctrl-0 = <&qpic_pins>;
 	pinctrl-names = "default";
 	status = "ok";
-
-	partitions {
-		status = "disabled";
-	};
 };
 
 &soc {
@@ -216,15 +268,37 @@
 			label = "green:usb";
 		};
 	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		pinctrl-0 = <&button_pins>;
+		pinctrl-names = "default";
+
+		button@1 {
+			label = "wps";
+			linux,code = <KEY_WPS_BUTTON>;
+			gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			debounce-interval = <60>;
+		};
+	};
+
+	qcom,test@0 {
+			status = "ok";
+		};
 };
 
+		// Dummy switch, to describe how the external ports connects to the MAC
+		// For example, some chips have PSGMII ports which combine 5 MAC into
+		// 1 external port.
+		// For IPQ50xx, this is used to choose SGMII or SGMII-plus
 &switch {
 	status = "okay";
 
-	switch_mac_mode = <0x0c>; // PORT_WRAPPER_SGMII_PLUS
+	switch_mac_mode = <MAC_MODE_SGMII_CHANNEL0>;
 
 	qcom,port_phyinfo {
-		// MAC0 -> GE Phy -> Phy4
+		// MAC0 -> GE Phy -> QCA8337 Phy4
 		port@0 {
 			port_id = <1>;
 			mdiobus = <&mdio0>;
@@ -232,7 +306,7 @@
 			// status = "disabled";
 		};
 
-		// MAC1 ---SGMII---> SerDes
+		// MAC1 ---SGMII---> QCA8337 SerDes
 		port@1 {
 			port_id = <2>;
 			forced-speed = <2500>;
@@ -242,15 +316,20 @@
 };
 
 // MAC0 -> GE Phy
-&dp1 {
-	status = "okay";
-	phy-mode = "sgmii";
-};
+//&dp1 {
+//status = "okay";
+//};
+
 
 // MAC1 ---SGMII---> SerDes
 &dp2 {
+	compatible = "qcom,nss-dp";
+	device_type = "network";
+	qcom,id = <2>;
 	status = "okay";
 	phy-mode = "sgmii";
+	mdio-bus = <&mdio1>;
+	qcom,mactype = <2>; // GMAC_HAL_TYPE_SYN_GMAC
 
 	fixed-link {
 		speed = <1000>;
@@ -258,22 +337,24 @@
 	};
 };
 
-&mdio0 {
-	status = "ok";
-	//resets = <&gcc GCC_GEPHY_MDC_SW_ARES>;
-	//reset-names = "phy";
-};
-
 // IPQ5018 GE Phy -> Phy4
 &ge_phy {
 	status = "okay";
+};
+
+&mdio0 {
+	status = "ok";
 };
 
 &mdio1 {
 	status = "okay";
 	pinctrl-0 = <&mdio1_pins>;
 	pinctrl-names = "default";
-	reset-gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+	reset-gpios = <&tlmm 33 GPIO_ACTIVE_LOW>;
+
+		ethernet-phy@0 {
+				reg = <0x1d>;
+			};
 };
 
 &sleep_clk {
@@ -344,9 +425,9 @@
 &q6v5_wcss {
 	memory-region = <&q6_mem_regions>;
 
-	firmware-name = "IPQ5018/q6_fw.mdt",
-			"IPQ5018/m3_fw.mdt",
-			"qcn6122/m3_fw.mdt";
+	firmware-name = "ath11k/IPQ5018/hw1.0/q6_fw.mdt",
+					"ath11k/IPQ5018/hw1.0/m3_fw.mdt",
+					"ath11k/qcn6122/hw1.0/m3_fw.mdt";
 
 	qcom,bootargs_smem = <507>;
 	boot-args = <0x01 0x04 0x02 0x0f 0x00 0x00>;
@@ -398,7 +479,7 @@
 			"stop",
 			"spawn";
 
-		firmware-name = "IPQ5018/q6_fw.mdt";
+		firmware-name = "ath11k/IPQ5018/hw1.0/q6_fw.mdt";
 		// m3_firmware = "IPQ5018/m3_fw.mdt";
 	};
 
@@ -424,7 +505,7 @@
 			"stop",
 			"spawn";
 
-		firmware-name = "IPQ5018/q6_fw.mdt";
+		firmware-name = "ath11k/IPQ5018/hw1.0/q6_fw.mdt";
 		// m3_firmware = "qcn6122/m3_fw.mdt";
 	};
 };

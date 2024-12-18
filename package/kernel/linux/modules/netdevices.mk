@@ -749,20 +749,20 @@ endef
 
 $(eval $(call KernelPackage,switch-rtl8367b))
 
-define KernelPackage/switch-rtl8367s
+define KernelPackage/switch-rtl8367c
   SUBMENU:=$(NETWORK_DEVICES_MENU)
-  TITLE:=Realtek RTL8367S switch support
+  TITLE:=Driver fot the Realtek RTL8367C/S switch
   DEPENDS:=+kmod-switch-rtl8366-smi
-  KCONFIG:=CONFIG_RTL8367S_PHY
-  FILES:=$(LINUX_DIR)/drivers/net/phy/rtl8367s/rtl8367s_gsw.ko
-  AUTOLOAD:=$(call AutoLoad,43,rtl8367s_gsw,1)
+  KCONFIG:=CONFIG_RTL8367C_PHY
+  FILES:=$(LINUX_DIR)/drivers/net/phy/rtl8367c.ko
+  AUTOLOAD:=$(call AutoLoad,43,rtl8367c,1)
 endef
 
-define KernelPackage/switch-rtl8367s/description
- Realtek RTL8367S switch support
+define KernelPackage/switch-rtl8367c/description
+ Driver fot the Realtek RTL8367R-VB switch
 endef
 
-$(eval $(call KernelPackage,switch-rtl8367s))
+$(eval $(call KernelPackage,switch-rtl8367c))
 
 define KernelPackage/switch-ar8xxx
   SUBMENU:=$(NETWORK_DEVICES_MENU)

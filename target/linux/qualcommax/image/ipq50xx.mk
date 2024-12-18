@@ -55,7 +55,9 @@ define Device/tplink_ax55v1
 					   ipq-wifi-tplink_ax55v1 \
 					   kmod-bluetooth \
 					   ipq5018-maple-bt-firmware \
-					   kmod-switch-rtl8366-smi
+					   kmod-switch-rtl8366-smi \
+					   kmod-switch-rtl8367b \
+					   kmod-leds-gpio
 					  
 					   
 			
