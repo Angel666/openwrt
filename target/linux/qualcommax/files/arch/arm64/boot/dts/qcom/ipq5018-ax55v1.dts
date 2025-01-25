@@ -18,12 +18,12 @@
 		serial0 = &blsp1_uart1;
 		//ethernet0 = &dp1;
 		ethernet1 = &dp2;
+		label-mac-device = &dp2;
 	};
 
 	chosen {
-		bootargs = "console=ttyMSM0,115200,n8 rw init=/init";
-		bootargs-append = " swiotlb=1 coherent_pool=2M";
-		stdout-path = "serial0";
+		bootargs-append = " root=/dev/ubiblock0_1 swiotlb=1 coherent_pool=2M";
+		stdout-path = "serial0:115200n8";
 	};
 
 	reserved-memory {
@@ -231,7 +231,132 @@ realtek@29{
 	pinctrl-0 = <&qpic_pins>;
 	pinctrl-names = "default";
 	status = "ok";
+
+	partitions {
+		status = "disabled";
+	};
 };
+
+nand@0 {
+        compatible = "spi-nand";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		nand-ecc-engine = <&qpic_nand>;
+
+        nand-ecc-strength = <4>;
+        nand-ecc-step-size = <512>;
+        nand-bus-width = <8>;
+
+        partitions {
+            compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "0:SBL1";
+				reg = <0x00 0x80000>;
+				read-only;
+			};
+
+            partition@80000 {
+				label = "0:MIBIB";
+				reg = <0x80000 0x80000>;
+				read-only;
+			};
+
+			partition@100000 {
+				label = "0:BOOTCONFIG";
+				reg = <0x100000 0x40000>;
+				read-only;
+			};
+
+            partition@140000 {
+				label = "0:BOOTCONFIG1";
+				reg = <0x140000 0x40000>;
+				read-only;
+			};
+
+            partition@180000 {
+				label = "0:QSEE";
+				reg = <0x180000 0x100000>;
+				read-only;
+			};
+
+            partition@280000 {
+				label = "0:DEVCFG";
+				reg = <0x280000 0x40000>;
+				read-only;
+			};
+
+            partition@2c0000 {
+				label = "0:CDT";
+				reg = <0x2c0000 0x40000>;
+			};
+
+            partition@300000 {
+				label = "0:APPSBLENV";
+				reg = <0x300000 0x80000>;
+				read-only;
+			};
+
+			partition@380000 {
+					label = "0:APPSBL";
+					reg = <0x380000 0x140000>;
+					read-only;
+				};
+
+			partition@4c0000 {
+				label = "0:ART";
+				reg = <0x4c0000 0x100000>;
+				read-only;
+				
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					macaddr_dp2: macaddr@0 {
+						reg = <0x0 0x6>;
+					};
+
+				};
+			};
+
+            partition@5c0000 {
+				label = "0:TRAINING";
+				reg = <0x5c0000 0x80000>;
+				read-only;
+			};
+
+            partition@640000 {
+				label = "rootfs";
+				reg = <0x640000 0x2a00000>;
+			};
+
+			partition@3040000 {
+				label = "rootfs_1";
+				reg = <0x3040000 0x2a00000>;
+			};
+
+			partition@5a40000 {
+				label = "tp_data";
+				reg = <0x5a40000 0x840000>;
+			};
+
+			partition@6280000 {
+				label = "radio";
+				reg = <0x6280000 0x440000>;
+				read-only;
+			};
+
+			partition@66c0000 {
+				label = "data";
+				reg = <0x66c0000 0x80000>;
+			};
+        };
+    };
 
 &soc {
 	leds {
@@ -323,13 +448,10 @@ realtek@29{
 
 // MAC1 ---SGMII---> SerDes
 &dp2 {
-	compatible = "qcom,nss-dp";
-	device_type = "network";
-	qcom,id = <2>;
 	status = "okay";
 	phy-mode = "sgmii";
-	mdio-bus = <&mdio1>;
-	qcom,mactype = <2>; // GMAC_HAL_TYPE_SYN_GMAC
+	nvmem-cells = <&macaddr_dp2>;
+	nvmem-cell-names = "mac-address";
 
 	fixed-link {
 		speed = <1000>;
